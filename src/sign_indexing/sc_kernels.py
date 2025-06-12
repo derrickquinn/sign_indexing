@@ -1,3 +1,10 @@
+"""Low level Numba kernels used by :mod:`sign_indexing`.
+
+The functions defined here implement the performance critical pieces of the
+sign‑concordance filter and reranking stages.  They are written with Numba so
+that they JIT compile to efficient native code when first executed.
+"""
+
 import numba
 from numba.extending import intrinsic
 from numba import njit, prange, get_num_threads, get_thread_id
@@ -5,9 +12,12 @@ from numba import njit, prange, get_num_threads, get_thread_id
 import numpy as np
 
 
-### These numba methods are needed for fast hamming distance calculation
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
 @intrinsic
 def popcnt64(typingctx, x):
+    """Return the number of set bits in ``x`` using LLVM's ``ctpop`` intrinsic."""
     sig = x(x)
     def codegen(context, builder, signature, args):
         [a] = args
@@ -21,10 +31,29 @@ def popcnt64(typingctx, x):
 
 @numba.njit(inline="always", fastmath=True, cache=True)
 def count_bits(val):
+    """Return the population count of ``val`` as an int8."""
     return np.int8(popcnt64(val))
 
 @numba.njit(parallel=True, fastmath=True, cache=True)
 def xor_blocked(block, q_signs, dot_threshold):
+    """Filter candidates by Hamming distance.
+
+    Parameters
+    ----------
+    block:
+        3‑D array of packed sign bits representing the indexed vectors,
+        partitioned into blocks.
+    q_signs:
+        Packed sign representation of the query vectors.
+    dot_threshold:
+        Maximum Hamming distance allowed (``d - threshold`` in the
+        high‑level API).
+
+    Returns
+    -------
+    np.ndarray
+        1‑D array containing the IDs of vectors that satisfy the constraint.
+    """
     b, m, k = block.shape
     n = q_signs.shape[0]
     joined = numba.typed.List.empty_list(np.int32[:])
@@ -75,6 +104,7 @@ def xor_blocked(block, q_signs, dot_threshold):
 ### This method is used for reranking filtered results
 @njit(parallel=True, fastmath=True)
 def topk_over_ids(xq, xb, ids, k):
+    """Compute top‑k dot products over a subset of IDs."""
     nq, d       = xq.shape
     n_threads   = get_num_threads()
 
