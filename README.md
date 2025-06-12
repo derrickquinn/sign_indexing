@@ -7,7 +7,9 @@ This repository implements an efficient similarity search system using Sign Conc
 - **IndexSC**: Performs fast, sign-based filtering of candidate vectors
 - **IndexRR**: Performs filtered reranking of candidate vectors
 
-Both IndexSC and IndexRR are implemented in numba kernels to improve performance. Futher improvements are almost certainly possible, but the current implementation is dramatically faster than naïve methods.
+Both IndexSC and IndexRR are implemented in numba kernels to improve performance. Futher improvements are almost certainly possible, but the current implementation is dramatically faster than naïve methods. 
+
+These components have been validated on x86 CPUs.
 
 ## Installation
 
