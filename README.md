@@ -24,7 +24,7 @@ Both IndexSC and IndexRR are implemented in numba kernels to improve performance
 
 ### Running the Example
 
-An example script is provided in `run_sc.py` that demonstrates the full pipeline. `run_sc.py` loads from an hdf5 file and runs the pipeline. 
+An example script is provided in `run_sc.py` that demonstrates the full pipeline. `run_sc.py` loads from a (hardcoded) hdf5 file and runs the pipeline. 
 
 ```bash
 wget http://ann-benchmarks.com/glove-100-angular.hdf5
