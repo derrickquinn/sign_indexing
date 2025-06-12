@@ -3,8 +3,8 @@
 This module exposes two primary classes:
 
 ``IndexSC``
-    Builds a sign-concordance filter (SCF) from input vectors and allows fast
-    candidate filtering based on Hamming distance.
+    Builds an index for sign-concordance filtering (SCF) from input vectors and allows fast
+    candidate filtering based on Hamming distance and thresholding.
 
 ``IndexRR``
     Re-ranks filtered candidates using full precision dot-product similarity.
@@ -77,20 +77,14 @@ class IndexSC:
         Optional path to a previously saved index to load.
     transform:
         Optional matrix used to project input vectors before indexing.
-    dim_out:
-        If provided, vectors will be padded or truncated to this dimensionality
-        before indexing.
-    zero_positive:
-        Whether zeros should be treated as positive when computing signs.
     """
 
-    def __init__(self, file=None, transform=False, dim_out=None, zero_positive=False):
+    def __init__(self, file=None, transform=False):
         self.transform = None
         self.v_signs = None
         self.threshold = 0
         self.ntotal = 0
         self.d = None
-        self.dim_out = dim_out
         self.block_size = 0
         self.blocks = None
         if file is not None:
@@ -137,28 +131,18 @@ class IndexSC:
         self.blocks = np.reshape(packed, (num_blocks, self.block_size, packed_per_entry))
 
 
-    def add(self, xb: np.ndarray, zero_positive: bool = False, num_blocks: int = 16) -> None:
+    def add(self, xb: np.ndarray, num_blocks: int = 16) -> None:
         """Add base vectors to the filter.
 
         Parameters
         ----------
         xb:
             Array of shape ``(n_vectors, dim)`` containing the dataset.
-        zero_positive:
-            Treat zeros as positive when computing signs.
         num_blocks:
             Number of blocks to partition the index into.
         """
-        if self.dim_out is not None and self.dim_out > xb.shape[1]:
-            xb = np.pad(xb, ((0, 0), (0, self.dim_out - xb.shape[1])),
-                        mode='constant', constant_values=0)
-        if self.transform is not None:
-            xb = xb @ self.transform
 
-        if zero_positive:
-            signs = np.where(xb >= 0, 1, 0).astype(np.int8)
-        else:
-            signs = np.where(xb > 0, 1, 0).astype(np.int8)
+        signs = np.where(xb > 0, 1, 0).astype(np.int8)
         signs = signs.reshape(-1, signs.shape[-1]).astype(bool)
         self.ntotal = signs.shape[0]
 
@@ -168,7 +152,6 @@ class IndexSC:
         n, d = signs.shape
 
         # Convert to 64-bit integers
-        # Setup
         bits_per_packed = 64
         scaling_factor = bits_per_packed // 8
         packed_per_entry = math.ceil(d / bits_per_packed) 
@@ -188,7 +171,6 @@ class IndexSC:
     def search(
         self,
         xq: np.ndarray,
-        zero_positive: bool = False,
         threshold: int | None = None,
     ) -> np.ndarray:
         """Return IDs of vectors passing the sign-concordance filter.
@@ -197,8 +179,6 @@ class IndexSC:
         ----------
         xq:
             Query vectors of shape ``(n_queries, dim)``.
-        zero_positive:
-            Treat zeros as positive when computing signs.
         threshold:
             Minimum number of matching sign bits required. If ``None`` the
             instance's ``threshold`` attribute is used.
@@ -208,12 +188,6 @@ class IndexSC:
         np.ndarray
             1‑D array of candidate IDs.
         """
-        if self.dim_out is not None and self.dim_out > xq.shape[1]:
-            padding = self.dim_out - xq.shape[1]
-            xq = np.pad(xq, ((0, 0), (0, padding)), mode='constant', constant_values=0)
-        if self.transform is not None:
-
-            xq = xq @ self.transform
 
         d = self.d
 
@@ -256,9 +230,6 @@ class IndexSC:
     def read_index(self, filename: str) -> None:
         """Load a previously saved index from ``filename``."""
         path = f"{filename}"
-
-        if self.dim_out is not None:
-            path += f"_dim{self.dim_out}"
 
         path += ".pkl"
         with open(path, "rb") as pkl_file:
