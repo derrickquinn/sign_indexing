@@ -171,7 +171,6 @@ class IndexSC:
     def search(
         self,
         xq: np.ndarray,
-        threshold: int | None = None,
     ) -> np.ndarray:
         """Return IDs of vectors passing the sign-concordance filter.
 
@@ -212,10 +211,7 @@ class IndexSC:
 
         q_packed = q_packed.view(np.int64).reshape(nq, packed_per_entry)
 
-        if threshold is None:
-            threshold = self.threshold
-
-        hamming = xor_blocked(self.blocks, q_packed, np.int16(d-threshold))
+        hamming = xor_blocked(self.blocks, q_packed, np.int16(d-self.threshold))
         mask = hamming
 
         mask = mask[mask < self.ntotal]
