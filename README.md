@@ -1,6 +1,6 @@
 # Sign Indexing for Efficient Similarity Search
 
-This repository implements an efficient similarity search system using Sign Concordance Filtering (SCF). It's designed for high-dimensional vector similarity search.
+This repository implements an efficient similarity search system using Sign Concordance Filtering (SCF). It's designed for high-dimensional vector similarity search. Documentation is WIP.
 
 ## Components
 
