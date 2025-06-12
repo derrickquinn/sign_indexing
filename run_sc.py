@@ -61,7 +61,7 @@ def run_config(**kwargs):
 
     for i, (batch,t) in tqdm(enumerate(zip(query_loader, truth_loader)), total=len(query_loader)):
         s = time.time()
-        indices = index_sc.search(batch.numpy(), num_documents)
+        indices = index_sc.search(batch.numpy())
         scf_times.append(time.time() - s)
 
         s = time.time()
