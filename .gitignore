@@ -1,2 +1,5 @@
 venv
 *.hdf5
+build
+sign_indexing.egg-info
+__pycache__

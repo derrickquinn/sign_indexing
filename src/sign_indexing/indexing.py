@@ -3,11 +3,10 @@ import pickle
 import ctypes
 import time
 import code
-import faiss
 import numpy as np
 import numba
 import h5py
-from sc_kernels import xor_blocked, count_bits, topk_over_ids
+from .sc_kernels import xor_blocked, count_bits, topk_over_ids
 
 # Wrapper around numba kernel
 class IndexRR:

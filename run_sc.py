@@ -3,8 +3,7 @@ import numpy as np
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 
-from indexing import IndexSC, IndexRR
-import faiss
+from sign_indexing import IndexSC, IndexRR
 import h5py
 
 

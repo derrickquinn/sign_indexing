@@ -1,0 +1,45 @@
+# Sign Indexing for Efficient Similarity Search
+
+This repository implements an efficient similarity search system using Sign Concordance Filtering (SCF). It's designed for high-dimensional vector similarity search.
+
+## Components
+
+- **IndexSC**: Performs fast, sign-based filtering of candidate vectors
+- **IndexRR**: Performs filtered reranking of candidate vectors
+
+## Installation
+
+1. Create and activate a virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  
+   ```
+
+2. Install the required packages:
+   ```bash
+   pip install .
+   ```
+
+### Running the Example
+
+An example script is provided in `run_sc.py` that demonstrates the full pipeline. `run_sc.py` loads from an hdf5 file and runs the pipeline. 
+
+```bash
+wget http://ann-benchmarks.com/glove-100-angular.hdf5
+python run_sc.py
+```
+
+
+
+## Configuration
+
+The system can be configured with the following parameters:
+
+- `threshold`: The number of sign bits that must match (lower values are looser)
+- `batch_size`: Number of queries to process in parallel
+
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
