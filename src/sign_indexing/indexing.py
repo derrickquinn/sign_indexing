@@ -88,7 +88,7 @@ class IndexSC:
         self.block_size = 0
         self.blocks = None
         if file is not None:
-            self.read_index(file, transform, zero_positive)
+            self.read_index(file, transform)
 
     def set_v_signs(self, v_signs: np.ndarray, d: int, num_blocks: int = 32) -> None:
         """Directly set the packed sign matrix for the index.
@@ -194,10 +194,7 @@ class IndexSC:
         nq = xq.shape[0]
 
         q_array = np.array(xq)
-        if zero_positive:
-            q_signs = np.where(q_array >= 0, 1, 0).astype(np.int64)
-        else:
-            q_signs = np.where(q_array > 0, 1, 0).astype(np.int64)
+        q_signs = np.where(q_array > 0, 1, 0).astype(np.int64)
 
         q_packed = np.packbits(q_signs, axis=1)
 

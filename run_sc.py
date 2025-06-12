@@ -30,7 +30,7 @@ def run_config(**kwargs):
     batch_size = kwargs.get("batch_size", 1)
     num_documents = kwargs.get("num_documents", 10)
     hdf5_path = kwargs.get("hdf5_path", "glove-100-angular.hdf5")
-    num_queries = kwargs.get("num_queries", -1) # All queries
+    num_queries = kwargs.get("num_queries", 100) # All queries
 
     queries_arr = load_from_hdf5(hdf5_path, "test", ntotal=num_queries)
     truth_arr = load_from_hdf5(hdf5_path, "neighbors", ntotal=num_queries)
