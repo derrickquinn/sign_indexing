@@ -7,7 +7,7 @@ that they JIT compile to efficient native code when first executed.
 
 import numba
 from numba.extending import intrinsic
-from numba import njit, prange, get_num_threads, get_thread_id
+from numba import prange, get_num_threads, get_thread_id
 
 import numpy as np
 
@@ -102,8 +102,8 @@ def xor_blocked(block, q_signs, dot_threshold):
 
 
 ### This method is used for reranking filtered results
-@njit(parallel=True, fastmath=True)
-def topk_over_ids(xq, xb, ids, k):
+@numba.njit(parallel=True, fastmath=True, cache=True)
+def topk_over_ids(xq, xb, ids, q_mask, k):
     """Compute top‑k dot products over a subset of IDs."""
     nq, d       = xq.shape
     n_threads   = get_num_threads()
@@ -121,6 +121,8 @@ def topk_over_ids(xq, xb, ids, k):
         idxs = id_blocks[b]
         for idx in idxs:
             for qi in range(nq):
+                if not q_mask[qi, idx]:
+                    continue
                 s = 0.0
                 for dim in range(d):
                     s += xq[qi, dim] * xb[idx, dim]

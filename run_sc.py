@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 
 from sign_indexing import IndexSC, IndexRR
 import h5py
+import code
 
 
 def calculate_recall(ground_truth: list, results: list, k=32):
@@ -30,7 +31,7 @@ def run_config(**kwargs):
     batch_size = kwargs.get("batch_size", 1)
     num_documents = kwargs.get("num_documents", 10)
     hdf5_path = kwargs.get("hdf5_path", "glove-100-angular.hdf5")
-    num_queries = kwargs.get("num_queries", -1) # All queries
+    num_queries = kwargs.get("num_queries", 128) # All queries
 
     queries_arr = load_from_hdf5(hdf5_path, "test", ntotal=num_queries)
     truth_arr = load_from_hdf5(hdf5_path, "neighbors", ntotal=num_queries)
@@ -39,6 +40,7 @@ def run_config(**kwargs):
     
     # Need to normalize the documents for cosine similarity. Do this offline instead.
     documents_arr = normalize(documents_arr)
+
 
     index_rr = IndexRR()
     index_sc = IndexSC()

@@ -47,7 +47,7 @@ class IndexRR:
         """
         self.xb = xb
 
-    def search(self, xq: np.ndarray, k: int, ids: np.ndarray):
+    def search(self, xq: np.ndarray, k: int, ids: np.ndarray, q_mask: np.ndarray = None, num_shards = 1) -> np.ndarray:
         """Re-rank candidates for each query vector.
 
         Parameters
@@ -58,6 +58,8 @@ class IndexRR:
             Number of results to return.
         ids:
             Candidate indices produced by :class:`IndexSC`.
+        q_mask:
+            Mask for top-k insertion.
 
         Returns
         -------
@@ -65,7 +67,33 @@ class IndexRR:
             Array of shape ``(n_queries, k)`` containing the top indices,
             sorted best-to-worst.
         """
-        return topk_over_ids(xq, self.xb, ids, k)
+        q_mask = q_mask if q_mask is not None else np.ones((xq.shape[0], self.xb.shape[0]), dtype=bool)
+
+
+        if num_shards > 1:
+
+            # need to add padding eventually....
+            shards = self.xb.reshape(num_shards,-1,self.xb.shape[-1])
+            id_offsets = np.arange(shards.shape[0]) * shards.shape[1]
+
+
+            ids = [
+                    ids[np.where(ids // shards.shape[1] == i)[0]] - id_offsets[i]
+                    for i in range(shards.shape[0])
+                ]
+
+
+
+            results = np.array([
+                topk_over_ids(xq, shard, locals, q_mask, k)
+                for shard,locals in zip(shards, ids)
+                ]) + id_offsets[:, None, None]
+
+
+            return np.concatenate(results, axis=1)
+
+        else:
+            return topk_over_ids(xq, self.xb, ids, q_mask, k)
 
 # Sign-concordance index used for filtering
 class IndexSC:
@@ -142,7 +170,7 @@ class IndexSC:
             Number of blocks to partition the index into.
         """
 
-        signs = np.where(xb > 0, 1, 0).astype(np.int8)
+        signs = np.where(xb >= 0, 1, 0).astype(np.int8)
         signs = signs.reshape(-1, signs.shape[-1]).astype(bool)
         self.ntotal = signs.shape[0]
 
@@ -193,7 +221,7 @@ class IndexSC:
         nq = xq.shape[0]
 
         q_array = np.array(xq)
-        q_signs = np.where(q_array > 0, 1, 0).astype(np.int64)
+        q_signs = np.where(q_array >= 0, 1, 0).astype(np.int64)
 
         q_packed = np.packbits(q_signs, axis=1)
 
