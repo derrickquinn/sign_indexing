@@ -18,6 +18,7 @@ import pickle
 import ctypes
 import time
 import code
+from IPython import embed
 import numpy as np
 import numba
 import h5py
@@ -74,19 +75,18 @@ class IndexRR:
 
             # need to add padding eventually....
             shards = self.xb.reshape(num_shards,-1,self.xb.shape[-1])
+            shard_masks = q_mask.reshape(q_mask.shape[0], num_shards,-1).transpose(1,0,2)
             id_offsets = np.arange(shards.shape[0]) * shards.shape[1]
 
 
-            ids = [
+            local_ids = [
                     ids[np.where(ids // shards.shape[1] == i)[0]] - id_offsets[i]
                     for i in range(shards.shape[0])
                 ]
 
-
-
             results = np.array([
-                topk_over_ids(xq, shard, locals, q_mask, k)
-                for shard,locals in zip(shards, ids)
+                topk_over_ids(xq, shard, locals, mask, k)
+                for shard,locals,mask in zip(shards, local_ids, shard_masks)
                 ]) + id_offsets[:, None, None]
 
 
