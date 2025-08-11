@@ -85,7 +85,7 @@ class IndexRR:
                 ]
 
             results = np.array([
-                topk_over_ids(xq, shard, locals, mask, k)
+                topk_over_ids(xq, shard, locals, mask, 32)
                 for shard,locals,mask in zip(shards, local_ids, shard_masks)
                 ]) + id_offsets[:, None, None]
 
