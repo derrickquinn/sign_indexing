@@ -35,7 +35,7 @@ def count_bits(val):
     return np.int8(popcnt64(val))
 
 @numba.njit(parallel=True, fastmath=True, cache=True)
-def xor_blocked(block, q_signs, dot_threshold):
+def xor_blocked(block, q_signs, dot_threshold, q_mask = None):
     """Filter candidates by Hamming distance.
 
     Parameters
@@ -60,6 +60,8 @@ def xor_blocked(block, q_signs, dot_threshold):
     for i in range(b):
         joined.append(np.empty(0, dtype=np.int32))
 
+    use_q_mask = q_mask is not None
+
     for b in numba.prange(b):
         local_list = numba.typed.List.empty_list(np.int32)
 
@@ -72,9 +74,10 @@ def xor_blocked(block, q_signs, dot_threshold):
                 for p in range(k):
                     s += count_bits(q_xor[p])
 
+                base_idx = i + b*m
 
-                if s <= dot_threshold:
-                    local_list.append(np.int32(i + b*m))
+                if s <= dot_threshold and ((use_q_mask and q_mask[j,base_idx]) or not use_q_mask):
+                    local_list.append(np.int32(base_idx))
                     break
 
         local_arr = np.empty(len(local_list), dtype=np.int32)
